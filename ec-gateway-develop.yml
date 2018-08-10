@@ -38,10 +38,6 @@
         #  headers:
         #  - dummy
       routes:
-        - id:  baidu-route
-          uri: https://www.baidu.com
-          predicates:
-          - Path=/baidu
         - id:  ec-api
           uri: lb://ec-api
           predicates:
