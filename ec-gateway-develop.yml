@@ -12,7 +12,7 @@ spring:
         enabled: true
     config:
       name: ec-gateway
-      profile: local
+      profile: develop
       label: master
       discovery:
       #开启通过服务来访问config-server
@@ -32,21 +32,25 @@ spring:
         multiplier: 1.2
       uri: http://localhost:5502/
     gateway:
+      discovery:
+        locator:
+          enabled: true
       default-filters:
       #filter:
         #remove-non-proxy-headers:
         #  headers:
         #  - dummy
       routes:
-        - id:  baidu-route
-          uri: https://www.baidu.com
-          predicates:
-          - Path=/baidu
+#        - id:  baidu-route
+#          uri: https://www.baidu.com
+#          predicates:
+#          - Path=/baidu/
         - id:  ec-api
           uri: lb://ec-api
           predicates:
-          - Path=/ec-api/**
+          - Path=/api/**
           filters:
+          - SwaggerHeaderFilter
           - StripPrefix=1
           #- JwtCheck
           - name: Hystrix
@@ -56,33 +60,33 @@ spring:
         - id:  ec-order
           uri: lb://ec-order
           predicates:
-          - Path=/ec-order/**
+          - Path=/order/**
           filters:
+          - SwaggerHeaderFilter
           - StripPrefix=1
         - id:  ec-product
           uri: lb://ec-product
           predicates:
-          - Path=/ec-product/**
+          - Path=/product/**
           filters:
+          - SwaggerHeaderFilter
           - StripPrefix=1
         - id:  ec-system
           uri: lb://ec-system
           predicates:
-          - Path=/ec-system/**
+          - Path=/system/**
           filters:
+          - SwaggerHeaderFilter
           - StripPrefix=1
         - id:  ec-manager
           uri: lb://ec-manager
           predicates:
-          - Path=/ec-manager/**
+          - Path=/manager/**
           filters:
+          - SwaggerHeaderFilter
           - StripPrefix=1
-        - id:  ec-zipkinserver
-          uri: lb://ec-zipkinserver
-          predicates:
-          - Path=/ec-zipkinserver/**
-          filters:
-          - StripPrefix=1
+  zipkin:
+    base-url: http://localhost:9411
 server:
   port: 5504
 
@@ -90,7 +94,7 @@ logging:
   config: classpath:log4j2.xml
   level:
     org.springframework.cloud.gateway: TRACE
-#    org.springframework.http.server.reactive: DEBUG
+    org.springframework.http.server.reactive: DEBUG
 #    org.springframework.web.reactive: DEBUG
 #    reactor.ipc.netty: DEBUG
 
@@ -105,3 +109,4 @@ logging:
 #    ec-product: /ec-product/**
 #    ec-system: /ec-system/**
 #    ec-zipkinserver: /ec-zipkinserver/**
+
