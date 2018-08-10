@@ -73,12 +73,6 @@
           - Path=/ec-manager/**
           filters:
           - StripPrefix=1
-        - id:  ec-zipkinserver
-          uri: lb://ec-zipkinserver
-          predicates:
-          - Path=/ec-zipkinserver/**
-          filters:
-          - StripPrefix=1
 server:
   port: 5504
 
