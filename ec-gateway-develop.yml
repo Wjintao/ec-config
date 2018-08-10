@@ -1,4 +1,4 @@
-﻿spring:
+spring:
   application:
     name: ec-gateway
   cloud:
@@ -38,6 +38,10 @@
         #  headers:
         #  - dummy
       routes:
+        - id:  baidu-route
+          uri: https://www.baidu.com
+          predicates:
+          - Path=/baidu
         - id:  ec-api
           uri: lb://ec-api
           predicates:
@@ -73,6 +77,12 @@
           - Path=/ec-manager/**
           filters:
           - StripPrefix=1
+        - id:  ec-zipkinserver
+          uri: lb://ec-zipkinserver
+          predicates:
+          - Path=/ec-zipkinserver/**
+          filters:
+          - StripPrefix=1
 server:
   port: 5504
 
@@ -80,7 +90,6 @@ logging:
   config: classpath:log4j2.xml
   level:
     org.springframework.cloud.gateway: TRACE
-foo: foo version 2    
 #    org.springframework.http.server.reactive: DEBUG
 #    org.springframework.web.reactive: DEBUG
 #    reactor.ipc.netty: DEBUG
