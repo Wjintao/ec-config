@@ -1,0 +1,107 @@
+server:
+  port: 5553
+spring:
+  application:
+    name: ec-product
+  datasource:
+      #name: test
+      url: jdbc:mysql://10.250.0.67:3306/ec?useSSL=false&useUnicode=true&characterEncoding=utf-8
+      username: root
+      password: root
+      # 使用druid数据源
+      type: com.alibaba.druid.pool.DruidDataSource
+      driver-class-name: com.mysql.jdbc.Driver
+      druid:
+        filters: stat
+        maxActive: 200
+        initialSize: 5
+        maxWait: 60000
+        minIdle: 5
+        timeBetweenEvictionRunsMillis: 60000
+        minEvictableIdleTimeMillis: 300000
+        validationQuery: select 'x'
+        testWhileIdle: true
+        testOnBorrow: false
+        testOnReturn: false
+        poolPreparedStatements: true
+        maxOpenPreparedStatements: 20
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        #healthCheckPath: ${management.contextPath}/health
+        #healthCheckInterval: 15s
+        instance-id: ${spring.application.name}:${server.port}
+        enabled: true
+        service-name: ec-product
+    config:
+      name: ec-product
+      profile: local
+      label: master
+      discovery:
+      #开启通过服务来访问config-server
+        enabled: true
+        #指定配置中心注册的服务名
+        service-id: ec-configcenter
+      # true: 如果访问配置中心失败，则停止启动服务
+      fail-fast: true
+       # 配置重试，默认是重试6次，最初是延迟1s再次重试，如果再失败，则延迟1.1*1s、1.1*1.1*1s、… 。可以使用这个配置
+      retry:
+        initial-interval: 2000
+        # 最多重试次数
+        max-attempts: 6
+        # 最大重试间隔
+        max-interval: 4000
+        # 每次重试时间是之前的倍数
+        multiplier: 1.2
+      uri: http://localhost:5502/
+    bus:
+      trace:
+        enabled: true
+      enabled: true
+  sleuth:
+    web:
+      client:
+        enabled: true
+    sampler:
+      probability: 1.0 # 将采样比例设置为 1.0，也就是全部都需要。默认是 0.1
+  zipkin:
+    sender:
+      type: kafka
+    #base-url: http://localhost:9411/ # 指定了 Zipkin 服务器的地址
+  rabbitmq:
+    host: 10.250.0.67
+    port: 5672
+    username: cmcc_test
+    password: cmcc_test
+
+#指定了要生成文档的package，只有com.cmic包才会被生成文档
+swagger:
+  base-package: com.cmic
+
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  server:
+    servlet:
+      context-path: /
+    ssl:
+      enabled: false
+  endpoint:
+    health:
+      show-details: always
+
+mybatis:
+  mapper-locations: classpath:mapper/*.xml #这里是mapper的配置文件
+  type-aliases-package: com.cmic.product.pojo #这里是实体类的包
+
+#pagehelper分页插件
+pagehelper:
+    helperDialect: mysql
+    reasonable: true
+    supportMethodsArguments: true
+    params: count=countSql

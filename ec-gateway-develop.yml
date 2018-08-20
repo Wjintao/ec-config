@@ -1,4 +1,6 @@
-﻿spring:
+server:
+  port: 5504
+spring:
   application:
     name: ec-gateway
   cloud:
@@ -8,8 +10,9 @@
       discovery:
         #healthCheckPath: ${management.contextPath}/health
         #healthCheckInterval: 15s
-        #instance-id: ec-order
+        instance-id: ${spring.application.name}:${server.port}
         enabled: true
+        service-name: ec-gateway
     config:
       name: ec-gateway
       profile: develop
@@ -36,15 +39,8 @@
         locator:
           enabled: true
       default-filters:
-      #filter:
-        #remove-non-proxy-headers:
-        #  headers:
-        #  - dummy
+        - TraceIdFilter
       routes:
-#        - id:  baidu-route
-#          uri: https://www.baidu.com
-#          predicates:
-#          - Path=/baidu/
         - id:  ec-api
           uri: lb://ec-api
           predicates:
@@ -52,11 +48,19 @@
           filters:
           - SwaggerHeaderFilter
           - StripPrefix=1
+          #jwt校验
           #- JwtCheck
-          - name: Hystrix
-            args:
-              name: authHystrixCommand
-              fallbackUri: forward:/hystrixTimeout
+          #熔断
+          #- name: Hystrix
+          #  args:
+          #    name: authHystrixCommand
+          #    fallbackUri: forward:/hystrixTimeout
+          #限流
+          #- name: RequestRateLimiter
+          #  args:
+          #    redis-rate-limiter.replenishRate: 10 #速度
+          #    redis-rate-limiter.burstCapacity: 20 #令牌桶容量
+          #    key-resolver: "#{@ipKeyResolver}" #使用SpEL按名称引用bean
         - id:  ec-order
           uri: lb://ec-order
           predicates:
@@ -85,28 +89,39 @@
           filters:
           - SwaggerHeaderFilter
           - StripPrefix=1
+    bus:
+      trace:
+        enabled: true
+      enabled: true
+  sleuth:
+    web:
+      client:
+        enabled: true
+    sampler:
+      probability: 1.0 # 将采样比例设置为 1.0，也就是全部都需要。默认是 0.1
   zipkin:
-    base-url: http://localhost:9411
-server:
-  port: 5504
+    sender:
+      type: kafka
+    #base-url: http://localhost:9411/ # 指定了 Zipkin 服务器的地址
+#用http://Ip:port/actuator/bus-refresh 触发消息总线刷新配置
+  rabbitmq:
+    host: 10.250.0.67
+    port: 5672
+    username: cmcc_test
+    password: cmcc_test
+  kafka:
+    bootstrap-servers: 10.250.0.67:9092
 
-logging:
-  config: classpath:log4j2.xml
-  level:
-    org.springframework.cloud.gateway: TRACE
-    org.springframework.http.server.reactive: DEBUG
-    org.springframework.web.reactive: DEBUG
-    reactor.ipc.netty: DEBUG
-
-#zuul.routes.<serviceId>=<path>，其中<serviceId>用来指定路由的具体服务名，<path>用来配置匹配的请求表达式
-#zuul:
-#  routes:
-#    ec-demo-consumer: /ec-demo-consumer/**
-#    ec-demo-provider: /ec-demo-provider/**
-#    ec-manager: /ec-manager/**
-#    ec-api: /ec-api/**
-#    ec-order: /ec-order/**
-#    ec-product: /ec-product/**
-#    ec-system: /ec-system/**
-#    ec-zipkinserver: /ec-zipkinserver/**
-
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  server:
+    servlet:
+      context-path: /
+    ssl:
+      enabled: false
+  endpoint:
+    health:
+      show-details: always
