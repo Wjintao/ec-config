@@ -1,11 +1,14 @@
 server:
   port: 5552
+#  context-path: /ec-order
 spring:
   application:
     name: ec-order
+  profiles:
+    active: develop
   datasource:
       #name: test
-      url: jdbc:mysql://10.250.0.67:3306/ec?useSSL=false&useUnicode=true&characterEncoding=utf-8
+      url: jdbc:mysql://10.250.0.67:3306/ec-order?useSSL=false&useUnicode=true&characterEncoding=utf-8
       username: root
       password: root
       # 使用druid数据源
@@ -30,15 +33,15 @@ spring:
       host: localhost
       port: 8500
       discovery:
-        #healthCheckPath: ${management.contextPath}/health
-        #healthCheckInterval: 15s
-        instance-id: ${spring.application.name}:${server.port}
+        health-check-path: /actuator/health
+        health-check-interval: 15s
+        instance-id: ${spring.application.name}:${spring.application.instance_id:${server.port}}
         enabled: true
         service-name: ec-order
     config:
       name: ec-order
-      profile: local
-      label: master
+      profile: develop
+      label: develop_20180803
       discovery:
       #开启通过服务来访问config-server
         enabled: true
@@ -55,7 +58,6 @@ spring:
         max-interval: 4000
         # 每次重试时间是之前的倍数
         multiplier: 1.2
-      uri: http://localhost:5502/
     bus:
       trace:
         enabled: true
@@ -75,9 +77,31 @@ spring:
     port: 5672
     username: cmcc_test
     password: cmcc_test
+    listener:
+      simple:
+        acknowledge-mode: manual
+        concurrency: 3
+        max-concurrency: 10
+        prefetch: 1
   kafka:
     bootstrap-servers: 10.250.0.67:9092
-
+  redis:
+    #redis单机
+    #host: 10.250.0.67
+    #port: 6379
+    #password: 123456
+    #redis集群
+    cluster:
+      nodes: 10.250.0.68:7000,10.250.0.68:7001,10.250.0.68:7002,10.250.0.68:7003,10.250.0.68:7004,10.250.0.68:7005
+      max-redirects: 3
+    timeout: 10000
+    lettuce:
+      pool.max-active: 300
+      pool.max-wait: 500
+      pool.max-idle: 10
+      pool.min-idle: 0
+logging:
+  config: classpath:log4j2.xml
 #指定了要生成文档的package，只有com.cmic包才会被生成文档
 swagger:
   base-package: com.cmic
@@ -99,7 +123,6 @@ management:
 
 mybatis:
   mapper-locations: classpath:mapper/*.xml #这里是mapper的配置文件
-  type-aliases-package: com.cmic.order.pojo #这里是实体类的包
 
 #pagehelper分页插件
 pagehelper:
